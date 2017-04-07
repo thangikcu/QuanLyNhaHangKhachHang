@@ -13,18 +13,18 @@ public class App extends Application {
     private static Context context;
     private static SharedPreferences preferences;
 
+    public static Context getContext() {
+        return context;
+    }
+
+    public static SharedPreferences getPreferences() {
+        return preferences;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
         context = this;
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
-    }
-
-    public static Context getContext() {
-        return context;ahihi
-    }
-
-    public static SharedPreferences getPreferences() {
-        return preferences;
     }
 }
