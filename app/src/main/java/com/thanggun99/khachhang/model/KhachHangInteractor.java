@@ -29,7 +29,6 @@ public class KhachHangInteractor {
     private boolean isLogin;
     private MonOrder currentMonOrder;
 
-
     public KhachHangInteractor(OnKhachHangFinishedListener onKhachHangFinishedListener) {
         this.onKhachHangFinishedListener = onKhachHangFinishedListener;
         isLogin = false;
@@ -41,7 +40,7 @@ public class KhachHangInteractor {
         khachHang = new KhachHang();
         khachHang.setTenDangNhap(App.getPreferences().getString(KhachHang.USERNAME, null));
         khachHang.setMatKhau(App.getPreferences().getString(KhachHang.PASSWORD, null));
-        khachHang.setKieuDangNhap("auto");
+        khachHang.setKieuDangNhap("AUTO");
         khachHang.setDatabase(database);
 
         new LoginAsynTask().execute();
@@ -99,14 +98,11 @@ public class KhachHangInteractor {
 
     public boolean isGhiNhoDangNhap() {
 
-        if (TextUtils.isEmpty(App.getPreferences().getString(KhachHang.USERNAME, null))) {
-            return false;
-        }
-        return true;
+        return !TextUtils.isEmpty(App.getPreferences().getString(KhachHang.USERNAME, null));
 
     }
 
-    public void sentFeedback(String title, String content) {
+    public void sendFeedback(String title, String content) {
         class FeedbackTask extends AsyncTask<String, Void, Boolean> {
 
             @Override
@@ -135,10 +131,7 @@ public class KhachHangInteractor {
                 valuesPost.put("content", params[1]);
                 String s = API.callService(API.FEEDBACK_URL, null, valuesPost);
 
-                if (!TextUtils.isEmpty(s) && s.contains("success")) {
-                    return true;
-                }
-                return false;
+                return !TextUtils.isEmpty(s) && s.contains("success");
             }
         }
         new FeedbackTask().execute(title, content);
@@ -340,7 +333,6 @@ public class KhachHangInteractor {
 
     }
 
-
     public void tinhTien() {
         YeuCau yeuCau = khachHang.getYeuCau();
 
@@ -349,42 +341,51 @@ public class KhachHangInteractor {
         new SendYeuCauTask(null).execute();
     }
 
-    public void onTinhTienHoaDon() {
+    public void onTinhTienHoaDonService() {
         khachHang.setCurrentHoaDon(null);
 
     }
 
-    private class SendYeuCauTask extends AsyncTask<Void, Void, Boolean> {
-        private MonYeuCau monYeuCau;
-
-        public SendYeuCauTask(MonYeuCau monYeuCau) {
-            this.monYeuCau = monYeuCau;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            onKhachHangFinishedListener.onStartTask();
-            super.onPreExecute();
-        }
-
-        @Override
-        protected void onPostExecute(Boolean aBoolean) {
-            if (aBoolean) {
-                onKhachHangFinishedListener.onFinishSendYeuCau();
-            } else {
-                onKhachHangFinishedListener.onSendYeuCauFail();
+    public void reLoadDatasOnLogin() {
+        class ReloadDatasAsynTask extends AsyncTask<Void, Void, String> {
+            @Override
+            protected void onPreExecute() {
+                onKhachHangFinishedListener.onStartTask();
+                super.onPreExecute();
             }
-            onKhachHangFinishedListener.onFinishTask();
-            super.onPostExecute(aBoolean);
+
+            @Override
+            protected void onPostExecute(String s) {
+                switch (s) {
+                    case KhachHang.LOGIN_SUCCESS:
+                        onKhachHangFinishedListener.onLoginSuccess(khachHang);
+                        break;
+                    case KhachHang.OTHER_LOGIN:
+                        onKhachHangFinishedListener.onOtherLogin();
+                        onKhachHangFinishedListener.onReLoginFail();
+                        khachHang = null;
+                        break;
+                    case KhachHang.FAIL:
+                        onKhachHangFinishedListener.onReLoginFail();
+                        khachHang = null;
+                        break;
+                    default:
+                        break;
+                }
+                onKhachHangFinishedListener.onFinishTask();
+            }
+
+            @Override
+            protected String doInBackground(Void... params) {
+                if (database.loadThucDonList()) {
+                    khachHang.setKieuDangNhap("AUTO");
+                    return khachHang.login();
+                }
+                return KhachHang.FAIL;
+            }
         }
 
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            delay(500);
-
-            return khachHang.sendYeuCau(monYeuCau);
-        }
-
+        new ReloadDatasAsynTask().execute();
     }
 
     public void giamGiaHoaDon(int giamGia) {
@@ -429,42 +430,6 @@ public class KhachHangInteractor {
 
     }
 
-    private class LoginAsynTask extends AsyncTask<Void, Void, String> {
-        @Override
-        protected void onPreExecute() {
-            onKhachHangFinishedListener.onStartTask();
-            super.onPreExecute();
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            switch (s) {
-                case KhachHang.LOGIN_SUCCESS:
-                    isLogin = true;
-
-                    onKhachHangFinishedListener.onLoginSuccess(khachHang);
-                    break;
-                case KhachHang.OTHER_LOGIN:
-                    onKhachHangFinishedListener.onOtherLogin();
-                    khachHang = null;
-                    break;
-                case KhachHang.FAIL:
-                    onKhachHangFinishedListener.onLoginFail();
-                    khachHang = null;
-                    break;
-                default:
-                    break;
-            }
-            onKhachHangFinishedListener.onFinishTask();
-        }
-
-        @Override
-        protected String doInBackground(Void... params) {
-            delay(2000);
-            return khachHang.login();
-        }
-    }
-
     public void getThongTinPhucVu() {
         class GetThongTinPhucVuTask extends AsyncTask<String, Void, String> {
             @Override
@@ -505,7 +470,6 @@ public class KhachHangInteractor {
         new GetThongTinPhucVuTask().execute();
     }
 
-
     private void delay(int milis) {
         try {
             Thread.sleep(milis);
@@ -513,7 +477,6 @@ public class KhachHangInteractor {
             e.printStackTrace();
         }
     }
-
 
     public interface OnKhachHangFinishedListener {
 
@@ -568,6 +531,77 @@ public class KhachHangInteractor {
         void onFinishSendYeuCau();
 
         void onSendYeuCauFail();
+
+        void onReLoginFail();
+    }
+
+    private class SendYeuCauTask extends AsyncTask<Void, Void, Boolean> {
+        private MonYeuCau monYeuCau;
+
+        public SendYeuCauTask(MonYeuCau monYeuCau) {
+            this.monYeuCau = monYeuCau;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            onKhachHangFinishedListener.onStartTask();
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            if (aBoolean) {
+                onKhachHangFinishedListener.onFinishSendYeuCau();
+            } else {
+                onKhachHangFinishedListener.onSendYeuCauFail();
+            }
+            onKhachHangFinishedListener.onFinishTask();
+            super.onPostExecute(aBoolean);
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            delay(500);
+
+            return khachHang.sendYeuCau(monYeuCau);
+        }
+
+    }
+
+    private class LoginAsynTask extends AsyncTask<Void, Void, String> {
+        @Override
+        protected void onPreExecute() {
+            onKhachHangFinishedListener.onStartTask();
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            switch (s) {
+                case KhachHang.LOGIN_SUCCESS:
+                    isLogin = true;
+
+                    onKhachHangFinishedListener.onLoginSuccess(khachHang);
+                    break;
+                case KhachHang.OTHER_LOGIN:
+                    onKhachHangFinishedListener.onOtherLogin();
+                    khachHang = null;
+                    break;
+                case KhachHang.FAIL:
+                    onKhachHangFinishedListener.onLoginFail();
+                    khachHang = null;
+                    break;
+                default:
+                    break;
+            }
+            onKhachHangFinishedListener.onFinishTask();
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            delay(2000);
+            return khachHang.login();
+        }
     }
 
 }

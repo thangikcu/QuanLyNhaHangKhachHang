@@ -64,7 +64,6 @@ public class TinTucFragment extends BaseFragment implements KhachHangPresenter.T
             }
         });
         khachHangPresenter.setTinTucView(this);
-
     }
 
     @Override

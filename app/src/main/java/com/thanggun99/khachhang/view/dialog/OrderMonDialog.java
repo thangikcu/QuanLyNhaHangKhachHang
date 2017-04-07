@@ -19,6 +19,7 @@ import butterknife.BindView;
 
 public class OrderMonDialog extends BaseDialog {
 
+    private final KhachHangPresenter khachHangPresenter;
     @BindView(R.id.tv_ten_mon)
     TextView tvTenMon;
     @BindView(R.id.iv_mon)
@@ -36,18 +37,14 @@ public class OrderMonDialog extends BaseDialog {
     @BindView(R.id.tv_point_rating)
     TextView tvPointRating;
 
-    private final KhachHangPresenter khachHangPresenter;
-
     public OrderMonDialog(Context context, KhachHangPresenter khachHangPresenter) {
         super(context, R.layout.dialog_order_mon);
 
         this.khachHangPresenter = khachHangPresenter;
         tvTenMon.setMovementMethod(new ScrollingMovementMethod());
 
-        btnOk.setOnClickListener(this);
         btnCong.setOnClickListener(this);
         btnTru.setOnClickListener(this);
-        btnCancel.setOnClickListener(this);
     }
 
     public void setContent(Mon mon) {

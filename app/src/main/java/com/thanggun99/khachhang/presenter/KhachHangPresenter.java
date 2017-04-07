@@ -7,9 +7,9 @@ import com.thanggun99.khachhang.model.KhachHangInteractor;
 import com.thanggun99.khachhang.model.entity.DatBan;
 import com.thanggun99.khachhang.model.entity.HoaDon;
 import com.thanggun99.khachhang.model.entity.KhachHang;
+import com.thanggun99.khachhang.model.entity.Mon;
 import com.thanggun99.khachhang.model.entity.MonOrder;
 import com.thanggun99.khachhang.model.entity.NhomMon;
-import com.thanggun99.khachhang.model.entity.Mon;
 import com.thanggun99.khachhang.model.entity.TinTuc;
 import com.thanggun99.khachhang.util.Utils;
 
@@ -50,7 +50,7 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
         if (Utils.isConnectingToInternet()) {
             return true;
         } else {
-            mainView.showConnectFailDialog();
+            mainView.showNotify(Utils.getStringByRes(R.string.kiem_tra_ket_noi_mang));
             return false;
         }
     }
@@ -58,6 +58,7 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
     //on receive broadcast
     public void updateThongTinKhachHangService(KhachHang khachHangUpdate) {
         khachHangInteractor.updateThongTinKhachHang(khachHangUpdate);
+        mainView.showTenKhachHang(String.format(Utils.getStringByRes(R.string.ho_ten_khach_hang), khachHangUpdate.getTenKhachHang()));
         if (thongTinPhucVuView != null) {
             thongTinPhucVuView.showLayoutThongTinDatBan(khachHangInteractor.getCurrentDatBan());
         }
@@ -105,7 +106,7 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
 
     public void tinhTienHoaDonService() {
 
-        khachHangInteractor.onTinhTienHoaDon();
+        khachHangInteractor.onTinhTienHoaDonService();
         khachHangInteractor.deleteYeuCau();
 
         if (thongTinPhucVuView != null) {
@@ -166,16 +167,11 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
     }
 
     public void logout() {
-        khachHangInteractor.logout();
-        mainView.showViewOnUnlogin();
-        mainView.setNullFragments();
-        if (loginView != null) {
+        if (khachHangInteractor.isLogin()) {
 
-            loginView.showFormLogin();
-        }
-        if (homeView != null) {
-
-            homeView.showTabThucDon();
+            khachHangInteractor.logout();
+            mainView.clearFragments();
+            mainView.showViewOnUnlogin();
         }
     }
 
@@ -207,6 +203,12 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
     public void onDestroy() {
         mainView = null;
         thucDonView = null;
+        changepasswordView = null;
+        feedbackView = null;
+        homeView = null;
+        loginView = null;
+        tinTucView = null;
+        thongTinPhucVuView = null;
     }
 
     public void changePassWord(String password, String newPassword) {
@@ -229,7 +231,7 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
 
     public void sentFeedback(String title, String content) {
         if (checkConnect()) {
-            khachHangInteractor.sentFeedback(title, content);
+            khachHangInteractor.sendFeedback(title, content);
         }
     }
 
@@ -267,7 +269,6 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
 
         } else {
             thongTinPhucVuView.showLayoutDatBan();
-
         }
     }
 
@@ -345,6 +346,8 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
             if (getDatabase().getTinTucList() == null) {
 
                 khachHangInteractor.loadTinTucList();
+            } else {
+                tinTucView.showTinTucList();
             }
         }
     }
@@ -388,7 +391,6 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
         } else {
             thucDonView.showThucDon();
         }
-
     }
 
     public void setLoginView(LoginView loginView) {
@@ -458,6 +460,25 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
         }
     }
 
+    public void showConnectToServerFailDialog() {
+        mainView.showNotify(Utils.getStringByRes(R.string.mat_ket_noi_toi_may_chu));
+    }
+
+    public void reLoadDatas() {
+        mainView.clearFragments();
+        khachHangInteractor.getDatabase().refresh();
+        if (khachHangInteractor.isLogin()) {
+            khachHangInteractor.reLoadDatasOnLogin();
+        } else {
+
+            mainView.showHomeFragment();
+        }
+    }
+
+    @Override
+    public void onReLoginFail() {
+        logout();
+    }
 
     public interface ThucDonView {
 
@@ -482,8 +503,6 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
 
         void showloginFail();
 
-        void showFormLogin();
-
     }
 
     public interface MainView {
@@ -491,9 +510,7 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
 
         void showViewOnlogin(KhachHang khachHang);
 
-        void showConnectFailDialog();
-
-        void setNullFragments();
+        void clearFragments();
 
         void hideProgress();
 
@@ -508,6 +525,8 @@ public class KhachHangPresenter implements KhachHangInteractor.OnKhachHangFinish
         void showThongTinPhucVuFragment();
 
         void showNotify(String message);
+
+        void showTenKhachHang(String hoTen);
     }
 
     public interface ChangepasswordView {

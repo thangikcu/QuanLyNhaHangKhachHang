@@ -124,4 +124,6 @@
     <string name="da_tinh_tien">Cảm ơn bạn đã đến với nhà hàng</string>
     <string name="da_gui_yeu_cau">Đã gửi yêu cầu, vui lòng đợi xác nhận !</string>
     <string name="gui_yeu_cau_that_bai">Gửi yêu cầu thất bại !</string>
+    <string name="ho_ten_khach_hang">(%s)</string>
+    <string name="mat_ket_noi_toi_may_chu">Mất kết nối tới máy chủ !</string>
 </resources>

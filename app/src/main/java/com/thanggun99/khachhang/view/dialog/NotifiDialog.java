@@ -20,9 +20,8 @@ public class NotifiDialog extends BaseDialog {
     public NotifiDialog(@NonNull Context context) {
         super(context, R.layout.dialog_notifi);
         getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
-        setCancelable(true);
+        setCancelable(false);
 
-        btnCancel.setOnClickListener(this);
     }
 
     public void notifi(String message) {

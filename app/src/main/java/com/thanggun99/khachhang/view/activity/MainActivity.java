@@ -1,13 +1,11 @@
 package com.thanggun99.khachhang.view.activity;
 
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
@@ -25,9 +23,12 @@ import android.widget.TextView;
 import com.thanggun99.khachhang.R;
 import com.thanggun99.khachhang.model.entity.KhachHang;
 import com.thanggun99.khachhang.presenter.KhachHangPresenter;
+import com.thanggun99.khachhang.service.ConnectChangeBroadcastReceiver;
+import com.thanggun99.khachhang.service.MyBroadcastReceiver;
 import com.thanggun99.khachhang.service.MyFirebaseMessagingService;
 import com.thanggun99.khachhang.util.Utils;
 import com.thanggun99.khachhang.view.dialog.ChangePasswordDialog;
+import com.thanggun99.khachhang.view.dialog.NotifiDialog;
 import com.thanggun99.khachhang.view.fragment.AboutFragment;
 import com.thanggun99.khachhang.view.fragment.FeedbackFragment;
 import com.thanggun99.khachhang.view.fragment.HomeFragment;
@@ -35,6 +36,8 @@ import com.thanggun99.khachhang.view.fragment.LoginFragment;
 import com.thanggun99.khachhang.view.fragment.MyProfileFragment;
 import com.thanggun99.khachhang.view.fragment.SettingFragment;
 import com.thanggun99.khachhang.view.fragment.ThongTinPhucVuFragment;
+
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -53,7 +56,12 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
     private IntentFilter intentFilter;
     private PopupMenu popupMenu;
     private ImageButton btnArrowDown;
+
     private KhachHangPresenter khachHangPresenter;
+
+
+    //fragments
+    private Fragment fragmentIsShow;
     private HomeFragment homeFragment;
     private FeedbackFragment feedbackFragment;
     private SettingFragment settingFragment;
@@ -61,83 +69,10 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
     private ThongTinPhucVuFragment thongTinPhucVuFragment;
     private MyProfileFragment myProfileFragment;
     private LoginFragment loginFragment;
-    private Fragment fragmentIsShow;
+
     private ProgressDialog progressDialog;
-    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            switch (intent.getAction()) {
-                case MyFirebaseMessagingService.NOTIFI_ACTION:
-                    break;
-                case MyFirebaseMessagingService.LOGOUT_ACTION:
-
-                    if (khachHangPresenter.checkLogin()) {
-
-                        khachHangPresenter.onOtherLogin();
-                        khachHangPresenter.logout();
-                    }
-                    break;
-                case MyFirebaseMessagingService.UPDATE_DAT_BAN_ACTION:
-                    if (khachHangPresenter != null) {
-                        KhachHang khachHangUpdate = (KhachHang) intent.getSerializableExtra(MyFirebaseMessagingService.KHACH_HANG);
-
-                        khachHangPresenter.updateThongTinKhachHangService(khachHangUpdate);
-
-                        tvFullname.setText("(" + khachHangUpdate.getTenKhachHang() + ")");
-
-                        Utils.showNotify(Utils.getStringByRes(R.string.thong_bao),
-                                Utils.getStringByRes(R.string.thong_tin_cua_ban_da_duoc_cap_nhat));
-                    }
-                    break;
-                case MyFirebaseMessagingService.HUY_DAT_BAN_ACTION:
-                    if (khachHangPresenter != null) {
-                        khachHangPresenter.deleteDatBanService();
-
-                        Utils.showNotify(Utils.getStringByRes(R.string.thong_bao),
-                                Utils.getStringByRes(R.string.da_huy_dat_ban));
-                    }
-                    break;
-                case MyFirebaseMessagingService.TAO_HOA_DON_MOI_ACTION:
-                    if (khachHangPresenter != null) {
-                        khachHangPresenter.taoHoaDonMoiService();
-
-                        Utils.showNotify(Utils.getStringByRes(R.string.thong_bao),
-                                Utils.getStringByRes(R.string.da_tao_hoa_don_moi));
-                    }
-                    break;
-                case MyFirebaseMessagingService.GIAM_GIA_HOA_DON_ACTION:
-                    if (khachHangPresenter != null) {
-                        int giamGia = intent.getIntExtra(MyFirebaseMessagingService.GIAM_GIA, 0);
-
-                        khachHangPresenter.giamGiaHoaDonMoiService(giamGia);
-
-                        Utils.showNotify(Utils.getStringByRes(R.string.thong_bao),
-                                Utils.getStringByRes(R.string.ban_duoc_giam_gia) + " " + giamGia + "%");
-                    }
-                    break;
-                case MyFirebaseMessagingService.ORDER_MON_ACTION:
-                    if (khachHangPresenter != null) {
-
-                        khachHangPresenter.orderMonService();
-
-                        Utils.showNotify(Utils.getStringByRes(R.string.thong_bao),
-                                Utils.getStringByRes(R.string.da_them_mon));
-                    }
-                    break;
-                case MyFirebaseMessagingService.TINH_TIEN_HOA_DON_ACTION:
-                    if (khachHangPresenter != null) {
-
-                        khachHangPresenter.tinhTienHoaDonService();
-
-                        Utils.showNotify(Utils.getStringByRes(R.string.thong_bao),
-                                Utils.getStringByRes(R.string.da_tinh_tien));
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+    private MyBroadcastReceiver myBroadcastReceiver;
+    private NotifiDialog notifiDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,13 +89,13 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
     private void initComponets() {
         khachHangPresenter = new KhachHangPresenter(this);
 
+        notifiDialog = new NotifiDialog(this);
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage(Utils.getStringByRes(R.string.loading));
         progressDialog.setIndeterminate(true);
         progressDialog.setCancelable(false);
 
         //initFragment
-        fragmentIsShow = new Fragment();
         loginFragment = new LoginFragment(khachHangPresenter);
         homeFragment = new HomeFragment(khachHangPresenter);
 
@@ -169,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
         toggle = new ActionBarDrawerToggle(this,
                 drawerLayout, toolbar, R.string.navigation_drawer_open,
                 R.string.navigation_drawer_close);
+        myBroadcastReceiver = new MyBroadcastReceiver(khachHangPresenter);
         intentFilter = new IntentFilter();
 
     }
@@ -183,6 +119,8 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
 
         showNavigationOnUnLogin();
 
+        intentFilter.addAction(ConnectChangeBroadcastReceiver.CONNECT_AVAIlABLE);
+        intentFilter.addAction(ConnectChangeBroadcastReceiver.CONNECT_FAIL);
         intentFilter.addAction(MyFirebaseMessagingService.LOGOUT_ACTION);
         intentFilter.addAction(MyFirebaseMessagingService.NOTIFI_ACTION);
         intentFilter.addAction(MyFirebaseMessagingService.UPDATE_DAT_BAN_ACTION);
@@ -191,9 +129,8 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
         intentFilter.addAction(MyFirebaseMessagingService.GIAM_GIA_HOA_DON_ACTION);
         intentFilter.addAction(MyFirebaseMessagingService.ORDER_MON_ACTION);
         intentFilter.addAction(MyFirebaseMessagingService.TINH_TIEN_HOA_DON_ACTION);
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver,
+        LocalBroadcastManager.getInstance(this).registerReceiver(myBroadcastReceiver,
                 intentFilter);
-
     }
 
     private void findViews() {
@@ -207,11 +144,18 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
 
     @Override
     public void showLoginFragment() {
+        if (loginFragment == null) {
+            Utils.showLog("login frm null");
+            loginFragment = new LoginFragment(khachHangPresenter);
+        }
         fillFrame(loginFragment, 0);
     }
 
     @Override
     public void showHomeFragment() {
+        if (homeFragment == null) {
+            homeFragment = new HomeFragment(khachHangPresenter);
+        }
         fillFrame(homeFragment, R.id.btn_home);
     }
 
@@ -223,6 +167,11 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
         }
 
         fillFrame(thongTinPhucVuFragment, R.id.btn_thong_tin_phuc_vu);
+    }
+
+    @Override
+    public void showTenKhachHang(String hoTen) {
+        tvFullname.setText(hoTen);
     }
 
     @Override
@@ -247,13 +196,13 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
             toolbar.setTitle(Utils.getStringByRes(R.string.dang_nhap));
         }
 
-
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
-        if (fragmentIsShow.isVisible()) transaction.hide(fragmentIsShow);
+        if (fragmentIsShow != null && fragmentIsShow.isVisible()) transaction.hide(fragmentIsShow);
         if (fragment.isAdded()) {
             transaction.show(fragment);
         } else {
+            Utils.showLog("add new fragment" + fragment.getClass().getSimpleName());
             transaction.add(R.id.frame, fragment);
         }
         transaction.commitAllowingStateLoss();
@@ -277,20 +226,18 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
 
     @Override
     public void showNotify(String message) {
-        Utils.notifi(message);
-    }
-
-    @Override
-    public void showConnectFailDialog() {
-        Utils.notifi(Utils.getStringByRes(R.string.kiem_tra_ket_noi_mang));
+        notifiDialog.notifi(message);
     }
 
     @Override
     protected void onDestroy() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(myBroadcastReceiver);
 
         if (progressDialog != null) {
             progressDialog.cancel();
+        }
+        if (notifiDialog != null) {
+            notifiDialog.cancel();
         }
         khachHangPresenter.onDestroy();
         super.onDestroy();
@@ -304,12 +251,12 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
                 break;
             case R.id.tv_login:
                 drawerLayout.closeDrawer(GravityCompat.START);
+                if (loginFragment == null) loginFragment = new LoginFragment(khachHangPresenter);
                 fillFrame(loginFragment, 0);
                 break;
             default:
                 break;
         }
-
     }
 
     @Override
@@ -317,8 +264,9 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
         } else {
-            if (!(fragmentIsShow instanceof HomeFragment)) {
-                fillFrame(homeFragment, R.id.btn_home);
+            if (fragmentIsShow != null && !(fragmentIsShow instanceof HomeFragment)) {
+
+                showHomeFragment();
             } else {
                 super.onBackPressed();
             }
@@ -327,13 +275,10 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
 
     @Override
     public void showViewOnlogin(KhachHang khachHang) {
-
-        if (fragmentIsShow instanceof LoginFragment) {
-            fillFrame(homeFragment, R.id.btn_home);
-        }
+        showHomeFragment();
 
         tvUsername.setText(khachHang.getTenDangNhap());
-        tvFullname.setText("(" + khachHang.getTenKhachHang() + ")");
+        showTenKhachHang(String.format(Utils.getStringByRes(R.string.ho_ten_khach_hang), khachHang.getTenKhachHang()));
         showNavigationOnLogin();
     }
 
@@ -343,14 +288,38 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
         tvFullname.setText("");
         drawerLayout.closeDrawer(GravityCompat.START);
         popupMenu.dismiss();
-        fillFrame(loginFragment, 0);
+        showLoginFragment();
         showNavigationOnUnLogin();
     }
 
     @Override
-    public void setNullFragments() {
+    public void clearFragments() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        List<Fragment> fragments = fragmentManager.getFragments();
+
+        if (fragments.size() > 0) {
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+
+            for (Fragment fragment : fragments) {
+                if (fragment != null) {
+
+                    Utils.showLog("xoa " + fragment.getClass().getName());
+                    transaction.remove(fragment);
+                }
+            }
+
+            transaction.commit();
+        }
+
+        notifiDialog.cancel();
+        fragmentIsShow = null;
         thongTinPhucVuFragment = null;
         myProfileFragment = null;
+        loginFragment = null;
+        homeFragment = null;
+        aboutFragment = null;
+        settingFragment = null;
+        feedbackFragment = null;
     }
 
     @Override
@@ -377,6 +346,7 @@ public class MainActivity extends AppCompatActivity implements KhachHangPresente
     public boolean onNavigationItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.btn_home:
+                if (homeFragment == null) homeFragment = new HomeFragment(khachHangPresenter);
                 fillFrame(homeFragment, R.id.btn_home);
                 break;
             case R.id.btn_gop_y:

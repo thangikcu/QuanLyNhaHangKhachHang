@@ -141,9 +141,11 @@ public class Database {
 
     public ArrayList<Mon> getListThucDonByMaLoai(int maLoai) {
         ArrayList<Mon> monTheoLoai = new ArrayList<>();
-        for (Mon mon : monList) {
-            if (mon.getMaLoai() == maLoai) {
-                monTheoLoai.add(mon);
+        if (monList != null) {
+            for (Mon mon : monList) {
+                if (mon.getMaLoai() == maLoai) {
+                    monTheoLoai.add(mon);
+                }
             }
         }
         return monTheoLoai;
@@ -171,5 +173,11 @@ public class Database {
 
     public void setNhomMonList(ArrayList<NhomMon> nhomMonList) {
         this.nhomMonList = nhomMonList;
+    }
+
+    public void refresh() {
+        nhomMonList = null;
+        monList = null;
+        tinTucList = null;
     }
 }

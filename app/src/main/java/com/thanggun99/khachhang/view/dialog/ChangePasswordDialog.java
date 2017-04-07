@@ -30,9 +30,6 @@ public class ChangePasswordDialog extends BaseDialog implements KhachHangPresent
 
         this.khachHangPresenter = khachHangPresenter;
 
-        btnOk.setOnClickListener(this);
-        btnCancel.setOnClickListener(this);
-
         khachHangPresenter.setChangepasswordView(this);
 
     }

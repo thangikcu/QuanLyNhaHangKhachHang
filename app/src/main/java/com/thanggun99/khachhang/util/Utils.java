@@ -16,6 +16,9 @@ import com.thanggun99.khachhang.App;
 import com.thanggun99.khachhang.R;
 import com.thanggun99.khachhang.view.dialog.NotifiDialog;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Map;
@@ -83,10 +86,27 @@ public class Utils {
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
 
         NetworkInfo info = connectivityManager.getActiveNetworkInfo();
-        if (info != null && info.isConnected()) {
+        return info != null && info.isConnected();
+    }
+
+    public static boolean isConnectValiable() {
+        Socket socket = new Socket();
+        String host = "www.google.com";
+        int port = 80;
+
+        try {
+            socket.connect(new InetSocketAddress(host, port), 2000);
+            socket.close();
             return true;
+        } catch (IOException e) {
+            try {
+                socket.close();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            e.printStackTrace();
+            return false;
         }
-        return false;
     }
 
     public static void notifi(String message) {

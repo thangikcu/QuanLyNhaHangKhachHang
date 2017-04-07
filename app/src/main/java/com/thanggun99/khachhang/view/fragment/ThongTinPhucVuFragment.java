@@ -93,7 +93,6 @@ public class ThongTinPhucVuFragment extends BaseFragment implements View.OnClick
     public ThongTinPhucVuFragment(KhachHangPresenter khachHangPresenter) {
         super(R.layout.fragment_thong_tin_phuc_vu);
         this.khachHangPresenter = khachHangPresenter;
-
     }
 
     @Override

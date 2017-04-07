@@ -3,8 +3,6 @@ package com.thanggun99.khachhang.view.fragment;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -47,11 +45,6 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener,
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-    }
-
-    @Override
     public void initComponents() {
     }
 
@@ -62,7 +55,6 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener,
         khachHangPresenter.setLoginView(this);
 
     }
-
 
     private boolean checkForm() {
         View focusView = null;
@@ -87,13 +79,6 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener,
     }
 
     @Override
-    public void showFormLogin() {
-        edtPassword.setText("");
-        edtUsername.requestFocus();
-        ckbGhiNho.setChecked(false);
-    }
-
-    @Override
     public void showloginFail() {
         tvErrorLogin.setVisibility(View.VISIBLE);
     }
@@ -107,7 +92,7 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener,
                     KhachHang khachHang = new KhachHang();
                     khachHang.setTenDangNhap(edtUsername.getText().toString().trim());
                     khachHang.setMatKhau(edtPassword.getText().toString().trim());
-                    khachHang.setKieuDangNhap("notAuto");
+                    khachHang.setKieuDangNhap("NOT_AUTO");
                     khachHang.setGhiNho(ckbGhiNho.isChecked());
                     khachHangPresenter.login(khachHang);
                 }

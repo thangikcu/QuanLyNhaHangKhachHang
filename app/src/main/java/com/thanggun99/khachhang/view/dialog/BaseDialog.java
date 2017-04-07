@@ -44,6 +44,13 @@ public abstract class BaseDialog extends Dialog implements View.OnClickListener{
         getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         getWindow().setLayout(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(this);
+        }
+        if (btnOk != null) {
+            btnOk.setOnClickListener(this);
+        }
+
     }
     @Override
     public void onClick(View v) {

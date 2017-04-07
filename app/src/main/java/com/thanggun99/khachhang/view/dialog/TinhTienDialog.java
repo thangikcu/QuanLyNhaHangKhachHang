@@ -34,9 +34,6 @@ public class TinhTienDialog extends BaseDialog {
         super(context, R.layout.dialog_tinh_tien);
         this.khachHangPresenter = khachHangPresenter;
 
-        btnOk.setOnClickListener(this);
-        btnCancel.setOnClickListener(this);
-
     }
 
     @Override

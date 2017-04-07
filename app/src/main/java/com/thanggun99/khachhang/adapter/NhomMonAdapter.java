@@ -42,6 +42,9 @@ public class NhomMonAdapter extends RecyclerView.Adapter<NhomMonAdapter.ViewHold
         progressDialog.setMessage(Utils.getStringByRes(R.string.loading));
         progressDialog.setCancelable(false);
 
+        for (NhomMon nhomMon : nhomMonList) {
+            nhomMon.setSelected(false);
+        }
 
         NhomMon nhomMon = nhomMonList.get(0);
         nhomMon.setSelected(true);

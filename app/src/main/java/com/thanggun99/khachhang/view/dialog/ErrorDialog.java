@@ -15,7 +15,6 @@ public class ErrorDialog extends BaseDialog{
         this.khachHangPresenter = khachHangPresenter;
         setCancelable(false);
 
-        btnOk.setOnClickListener(this);
     }
 
     @Override

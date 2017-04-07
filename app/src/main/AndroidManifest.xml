@@ -24,6 +24,12 @@
         <activity android:name=".view.activity.RegisterActivity"
             android:screenOrientation="portrait"/>
 
+        <receiver android:name=".service.ConnectChangeBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+
         <service android:name=".service.MyFirebaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

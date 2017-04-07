@@ -22,9 +22,6 @@ public class ConfirmDialog extends BaseDialog {
         super(context, R.layout.dialog_confirm);
         setCancelable(true);
 
-        btnCancel.setOnClickListener(this);
-
-        btnOk.setOnClickListener(this);
     }
 
     @Override
