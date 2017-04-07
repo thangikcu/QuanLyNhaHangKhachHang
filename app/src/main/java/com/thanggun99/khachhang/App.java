@@ -21,7 +21,7 @@ public class App extends Application {
     }
 
     public static Context getContext() {
-        return context;
+        return context;ahihi
     }
 
     public static SharedPreferences getPreferences() {
